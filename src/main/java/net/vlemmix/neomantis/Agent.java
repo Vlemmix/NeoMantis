@@ -1,7 +1,15 @@
 package net.vlemmix.neomantis;
 
+import net.vlemmix.neomantis.utils.BitfinexAccount;
 import net.vlemmix.neomantis.utils.SqliteDb;
+import net.vlemmix.neomantis.utils.Wallet;
+import org.knowm.xchange.Exchange;
+import org.knowm.xchange.currency.Currency;
+import org.knowm.xchange.dto.account.Balance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,7 +18,10 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.Locale;
+import java.util.Map;
+
 
 import static java.sql.Types.NULL;
 
@@ -36,9 +47,18 @@ public class Agent implements Runnable {
     private int state;
     private NeoMantisOrder neoMantisOrder;
 
+    private float totalBudget;
+
+    Exchange exchange = BitfinexAccount.createExchange();
+
+    private static final Logger log = LoggerFactory.getLogger(Agent.class);
+
     public Agent(int id, LocalDateTime created, String name, String style, String symbol, int refreshPeriod, int weight,
                  float fractionOfBudget, float baseBuyPercent, float baseSellPercent, float noiseBuyPercentOfBase,
                  float noiseSellPercentOfBase, int updatePeriod) {
+
+        log.info("Agent....");
+
         this.id = id;
         this.created = created;
         this.name = name;
@@ -157,8 +177,9 @@ public class Agent implements Runnable {
                 //neoMantisOrder = new NeoMantisOrder(NULL,NULL,LocalDateTime.now(),symbol,3,);
 
             } else {
-                System.out.println("For " + name + " not found");// so create one
+                System.out.println("Order for " + name + " not found");// so create one
                 System.out.println("getting total budget");
+                updateTotalBudget();
                 state = NeoMantisState.WAITING_FOR_PLACE_ORDER_TRIGGER;
 
 
@@ -169,4 +190,26 @@ public class Agent implements Runnable {
         }
     }
 
+    public void updateTotalBudget() {
+        log.info("updateTotalBudget");
+        Wallet.getInstance().update();
+
+        // test:
+//        Map<Currency, Balance> balances = null;
+//        try {
+//            balances = exchange.getAccountService().getAccountInfo().getWallet().getBalances();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        System.out.println("BALANCE:");
+//        System.out.println(balances);
+//        System.out.println(balances.get(Currency.BTC));
+//        Collection<Balance> bal=  balances.values();
+//        for (int i =0; i<bal.size();i++){
+//            System.out.println("nog een "+bal.toArray()[i]);
+//            System.out.println("DUS in aantal: "+((Balance)bal.toArray()[i]).getAvailable()+ " "+((Balance)bal.toArray()[i]).getCurrency());
+//            System.out.println("DUS in aantal: "+((Balance)bal.toArray()[i]).getAvailable()+ " "+((Balance)bal.toArray()[i]).getAvailable());
+//        }
+
+    }
 }
